@@ -1,4 +1,4 @@
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, send_file, request, jsonify
 import math
 import random
 import time
@@ -80,7 +80,7 @@ def is_prime_miller_rabin(n, k=5):
 
 @app.route('/')
 def index():
-    return render_template('index.html')
+    return send_file('index.html')
 
 @app.route('/check_prime', methods=['POST'])
 def check_prime():
