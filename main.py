@@ -6,77 +6,112 @@ import time
 app = Flask(__name__)
 
 def is_prime_trial(n):
-    start = time.time()
+    """Determine if a number is prime using Trial Division method.
+    
+    Args:
+        n (int): Number to test
+        
+    Returns:
+        tuple: (result, steps, time_ms) where:
+            - result (bool): True if prime, False otherwise
+            - steps (list): List of strings describing each step
+            - time_ms (float): Execution time in milliseconds
+    """
+    start_time = time.time()
     steps = []
+    
+    # Step 1: Check basic cases
     if n <= 1:
-        steps.append(f"{n} is not prime (≤1)")
+        steps.append("Numbers ≤ 1 are not prime by definition")
         return False, steps, 0
     if n == 2:
-        steps.append("2 is prime")
+        steps.append("2 is the only even prime number")
         return True, steps, 0
     if n % 2 == 0:
-        steps.append(f"{n} is even → composite")
+        steps.append(f"{n} is even and greater than 2 → composite")
         return False, steps, 0
-    
+
+    # Step 2: Calculate maximum divisor to check
     sqrt_n = int(math.sqrt(n)) + 1
-    steps.append(f"Checking divisors from 3 to {sqrt_n}")
-    
+    steps.append(f"Prime check requires testing divisors up to √{n} ≈ {sqrt_n-1}")
+
+    # Step 3: Test odd divisors starting from 3
+    steps.append(f"Testing odd divisors from 3 to {sqrt_n-1} (step 2):")
     for i in range(3, sqrt_n, 2):
         if n % i == 0:
             steps.append(f"Found divisor: {i} → composite")
-            return False, steps, time.time()-start
-        steps.append(f"Tested divisor: {i} ✓")
-    
-    steps.append(f"No divisors found → prime")
-    return True, steps, (time.time()-start)*1000
+            return False, steps, (time.time()-start_time)*1000
+        steps.append(f"Divisor {i} tested → no factor found")
+
+    # Step 4: If no divisors found
+    steps.append("No divisors found → confirmed prime")
+    return True, steps, (time.time()-start_time)*1000
 
 def is_prime_miller_rabin(n, k=5):
-    start = time.time()
+    """Determine if a number is prime using Miller-Rabin probabilistic test.
+    
+    Args:
+        n (int): Number to test
+        k (int): Number of iterations/witnesses
+        
+    Returns:
+        tuple: (result, steps, time_ms)
+    """
+    start_time = time.time()
     steps = []
+    
+    # Step 1: Handle base cases
     if n <= 1:
-        steps.append(f"{n} is not prime (≤1)")
+        steps.append("Numbers ≤ 1 are not prime by definition")
         return False, steps, 0
     if n <= 3:
-        steps.append(f"{n} is prime (≤3)")
+        steps.append(f"{n} is prime (basic case)")
         return True, steps, 0
     if n % 2 == 0:
         steps.append(f"{n} is even → composite")
         return False, steps, 0
 
+    # Step 2: Decompose n-1 into d*2^s
     d = n - 1
     s = 0
     while d % 2 == 0:
         d //= 2
         s += 1
-    steps.append(f"Decomposition: {n-1} = {d} × 2^{s}")
+    steps.append(f"Decomposed {n-1} = {d} × 2^{s}")
 
-    for i in range(k):
+    # Step 3: Witness loop
+    steps.append(f"Testing {k} witnesses:")
+    for iteration in range(k):
         a = random.randint(2, n - 2)
-        steps.append(f"\nWitness {i+1}: a = {a}")
-        x = pow(a, d, n)
-        steps.append(f"Compute x = a^d mod n → {x}")
+        steps.append(f"\nWitness {iteration+1}: a = {a}")
         
+        # Step 3a: Compute x = a^d mod n
+        x = pow(a, d, n)
+        steps.append(f"Compute x = {a}^{d} mod {n} = {x}")
+
+        # Step 3b: Check initial value
         if x == 1 or x == n - 1:
-            steps.append(f"x = {x} → continue")
+            steps.append(f"x = {x} → witness passed")
             continue
-            
+
+        # Step 3c: Repeated squaring
         composite = True
         for r in range(1, s):
             x = pow(x, 2, n)
-            steps.append(f"Step {r}: x = x² mod n → {x}")
+            steps.append(f"Square step {r}: x = {x}")
             if x == n - 1:
-                steps.append("Found x = -1 mod n → continue")
+                steps.append("Found x ≡ -1 mod n → witness passed")
                 composite = False
                 break
-                
+
+        # Step 3d: Check if composite
         if composite:
-            steps.append("No x = -1 mod n found → composite")
-            return False, steps, (time.time()-start)*1000
-        else:
-            steps.append("Witness passed")
-    
+            steps.append("No x ≡ -1 mod n found → composite")
+            return False, steps, (time.time()-start_time)*1000
+
+    # Step 4: All witnesses passed
     steps.append(f"\nAll {k} witnesses passed → probably prime")
-    return True, steps, (time.time()-start)*1000
+    return True, steps, (time.time()-start_time)*1000
 
 @app.route('/')
 def index():
