@@ -1,0 +1,498 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Prime Number Tester</title>
+    <style>
+        :root {
+            --primary-color: #2c3e50;
+            --secondary-color: #3498db;
+            --success-color: #27ae60;
+            --danger-color: #e74c3c;
+            --background-color: #f5f6fa;
+            --card-bg: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --primary-color: #94a3b8;
+            --secondary-color: #60A5FA;
+            --success-color: #34D399;
+            --danger-color: #F87171;
+            --background-color: #1e293b;
+            --card-bg: #334155;
+        }
+
+        body {
+            font-family: 'Roboto', sans-serif;
+            background-color: var(--background-color);
+            margin: 0;
+            padding: 20px;
+            min-height: 100vh;
+            color: var(--primary-color);
+            transition: background 0.3s, color 0.3s;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+        }
+
+        h1 {
+            color: var(--primary-color);
+            text-align: center;
+            margin-bottom: 40px;
+        }
+
+        .input-group {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+        }
+
+        input {
+            flex: 1;
+            padding: 12px;
+            border: 2px solid #ddd;
+            border-radius: 6px;
+            font-size: 16px;
+            background: var(--card-bg);
+            color: var(--primary-color);
+        }
+
+        button {
+            padding: 12px 24px;
+            background-color: var(--secondary-color);
+            color: white;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+
+        button:hover {
+            opacity: 0.9;
+        }
+
+        .results {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        .card {
+            background-color: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .card h2 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+        }
+
+        .result {
+            font-size: 24px;
+            font-weight: bold;
+            margin: 15px 0;
+        }
+
+        .trial .result {
+            color: var(--success-color);
+        }
+
+        .miller .result {
+            color: var(--secondary-color);
+        }
+
+        .description {
+            color: #666;
+            font-size: 0.9em;
+        }
+
+        .visualizations {
+            margin-top: 30px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .visualization-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+        }
+
+        .visualization-card h3 {
+            margin: 0 0 15px 0;
+            color: var(--primary-color);
+        }
+
+        .steps {
+            max-height: 300px;
+            overflow-y: auto;
+            padding: 10px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            font-family: monospace;
+        }
+
+        .step-item {
+            padding: 8px 12px;
+            margin: 4px 0;
+            background: white;
+            border-radius: 4px;
+            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        }
+
+        .loader {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid var(--secondary-color);
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            animation: spin 1s linear infinite;
+            margin: 20px auto;
+            display: none;
+        }
+
+        @keyframes spin {
+            0% {
+                transform: rotate(0deg);
+            }
+
+            100% {
+                transform: rotate(360deg);
+            }
+        }
+
+        .error {
+            color: var(--danger-color);
+            text-align: center;
+            margin-top: 20px;
+            display: none;
+        }
+
+        .result small {
+            font-size: 14px;
+            font-weight: normal;
+            display: block;
+            color: var(--primary-color);
+            opacity: 0.8;
+        }
+
+        .explanations {
+            margin-top: 30px;
+            display: grid;
+            gap: 20px;
+        }
+
+        .explanation-card {
+            background: var(--card-bg);
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+            line-height: 1.1;
+        }
+
+        .explanation-card h3 {
+            color: var(--secondary-color);
+            margin: 0 0 15px 0;
+        }
+
+        .explanation-card ol,
+        .explanation-card ul {
+            margin: 10px 0;
+            padding-left: 20px;
+        }
+
+        .explanation-card li {
+            margin: 8px 0;
+        }
+
+        .explanation-card strong {
+            color: var(--success-color);
+            display: block;
+            margin-top: 15px;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h1>Prime Number Tester</h1>
+        <div class="input-group">
+            <input type="number" id="numberInput" placeholder="Enter a positive integer">
+            <button onclick="checkPrime()">Test Primality</button>
+        </div>
+
+        <div class="results">
+            <div class="card trial">
+                <h2>Trial Division</h2>
+                <div class="result" id="trialResult">-</div>
+                <div class="description">Deterministic method checking divisors up to √n</div>
+            </div>
+
+            <div class="card miller">
+                <h2>Miller-Rabin</h2>
+                <div class="result" id="millerResult">-</div>
+                <div class="description">Probabilistic method with 5 iterations (97.5% accuracy)</div>
+            </div>
+        </div>
+
+        <div class="visualizations">
+            <div class="visualization-card">
+                <h3>Trial Division Steps</h3>
+                <div class="steps" id="trialSteps"></div>
+            </div>
+
+            <div class="visualization-card">
+                <h3>Miller-Rabin Steps</h3>
+                <div class="steps" id="millerSteps"></div>
+            </div>
+        </div>
+
+        <div class="loader" id="loader"></div>
+        <div class="error" id="error"></div>
+        <div class="explanations">
+            <div class="explanation-card">
+                <h3>Trial Division Method</h3>
+                <p>A deterministic primality test that:</p>
+                <ol>
+                    <li>Checks if number ≤ 1 → composite</li>
+                    <li>Checks if number is 2 → prime</li>
+                    <li>Checks even numbers → composite if divisible by 2</li>
+                    <li>Tests odd divisors from 3 up to √n</li>
+                    <li>If any divisor found → composite</li>
+                    <li>If no divisors found → prime</li>
+                </ol>
+                <p><strong>Guaranteed accurate but slow for large numbers</strong></p>
+            </div>
+
+            <div class="explanation-card">
+                <h3>Miller-Rabin Test</h3>
+                <p>A probabilistic primality test that:</p>
+                <ol>
+                    <li>Writes n-1 as d×2<sup>s</sup></li>
+                    <li>Chooses random witnesses (5 in our case)</li>
+                    <li>For each witness a:
+                        <ul>
+                            <li>Computes x = a<sup>d</sup> mod n</li>
+                            <li>If x ≡ 1 or x ≡ -1 → continue</li>
+                            <li>Squares x up to s-1 times looking for -1</li>
+                        </ul>
+                    </li>
+                    <li>If any witness shows compositeness → composite</li>
+                    <li>If all witnesses pass → probably prime</li>
+                </ol>
+                <p><strong>Fast for large numbers with 97.5% accuracy (5 iterations)</strong></p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        function clientTrialDivision(n) {
+            const steps = [];
+            if (n <= 1) {
+                steps.push(`${n} is not prime (≤1)`);
+                return { result: false, steps };
+            }
+            if (n === 2) {
+                steps.push("2 is prime");
+                return { result: true, steps };
+            }
+            if (n % 2 === 0) {
+                steps.push(`${n} is even → composite`);
+                return { result: false, steps };
+            }
+
+            const sqrtN = Math.sqrt(n);
+            steps.push(`Checking divisors from 3 to ${Math.floor(sqrtN)}`);
+
+            for (let i = 3; i <= sqrtN; i += 2) {
+                if (n % i === 0) {
+                    steps.push(`Found divisor: ${i} → composite`);
+                    return { result: false, steps };
+                }
+                steps.push(`Tested divisor: ${i} ✓`);
+            }
+
+            steps.push("No divisors found → prime");
+            return { result: true, steps };
+        }
+
+        function clientMillerRabin(n, k = 5) {
+            const steps = [];
+            if (n <= 1) {
+                steps.push(`${n} is not prime (≤1)`);
+                return { result: false, steps };
+            }
+            if (n <= 3) {
+                steps.push(`${n} is prime (≤3)`);
+                return { result: true, steps };
+            }
+            if (n % 2 === 0) {
+                steps.push(`${n} is even → composite`);
+                return { result: false, steps };
+            }
+
+            let d = n - 1;
+            let s = 0;
+            while (d % 2 === 0) {
+                d = Math.floor(d / 2);
+                s++;
+            }
+            steps.push(`Decomposition: ${n - 1} = ${d} × 2^${s}`);
+
+            // Modular exponentiation helper
+            const modPow = (a, b, mod) => {
+                let result = 1n;
+                a = BigInt(a);
+                b = BigInt(b);
+                mod = BigInt(mod);
+                while (b > 0n) {
+                    if (b % 2n === 1n) result = (result * a) % mod;
+                    a = (a * a) % mod;
+                    b = b / 2n;
+                }
+                return Number(result);
+            };
+
+            for (let i = 0; i < k; i++) {
+                const a = Math.floor(Math.random() * (n - 3)) + 2;
+                steps.push(`\nWitness ${i + 1}: a = ${a}`);
+                let x = modPow(a, d, n);
+                steps.push(`Compute x = a^d mod n → ${x}`);
+
+                if (x === 1 || x === n - 1) {
+                    steps.push(`x = ${x} → continue`);
+                    continue;
+                }
+
+                let composite = true;
+                for (let r = 1; r < s; r++) {
+                    x = modPow(x, 2, n);
+                    steps.push(`Step ${r}: x = x² mod n → ${x}`);
+                    if (x === n - 1) {
+                        steps.push("Found x = -1 mod n → continue");
+                        composite = false;
+                        break;
+                    }
+                }
+
+                if (composite) {
+                    steps.push("No x = -1 mod n found → composite");
+                    return { result: false, steps };
+                } else {
+                    steps.push("Witness passed");
+                }
+            }
+
+            steps.push(`\nAll ${k} witnesses passed → probably prime`);
+            return { result: true, steps };
+        }
+
+        function checkPrime() {
+            const number = document.getElementById('numberInput').value;
+            const loader = document.getElementById('loader');
+            const errorDiv = document.getElementById('error');
+
+            document.getElementById('trialResult').innerHTML = '-';
+            document.getElementById('millerResult').innerHTML = '-';
+            document.getElementById('trialSteps').innerHTML = '';
+            document.getElementById('millerSteps').innerHTML = '';
+
+            if (!number || isNaN(number) || number < 1) {
+                showError('Please enter a valid positive integer');
+                return;
+            }
+
+            const n = parseInt(number);
+            if (n > 1000000) {
+                showError('For client-side execution, please use numbers ≤ 1,000,000');
+                return;
+            }
+
+            loader.style.display = 'block';
+            errorDiv.style.display = 'none';
+
+            fetch('/check_prime', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ number: n })
+            })
+                .then(response => {
+                    if (!response.ok) throw new Error('Backend unavailable');
+                    return response.json();
+                })
+                .then(data => updateResults(data))
+                .catch(() => {
+                    const trialStart = performance.now();
+                    const trial = clientTrialDivision(n);
+                    const trialTime = performance.now() - trialStart;
+
+                    const millerStart = performance.now();
+                    const miller = clientMillerRabin(n);
+                    const millerTime = performance.now() - millerStart;
+
+                    updateResults({
+                        number: n,
+                        trial_division: trial.result,
+                        miller_rabin: miller.result,
+                        trial_steps: trial.steps,
+                        miller_steps: miller.steps,
+                        trial_time: trialTime.toFixed(3),  // 3 decimal places
+                        miller_time: millerTime.toFixed(3)
+                    });
+                })
+                .finally(() => loader.style.display = 'none');
+        }
+
+        function updateResults(data) {
+            const trialResult = document.getElementById('trialResult');
+            const millerResult = document.getElementById('millerResult');
+
+            trialResult.innerHTML = data.trial_division ? 'Prime' : 'Composite';
+            millerResult.innerHTML = data.miller_rabin ? 'Probably Prime' : 'Composite';
+
+            // Add timing information if available
+            if (data.trial_time) {
+                trialResult.innerHTML += `<br><small>${data.trial_time}ms</small>`;
+            }
+            if (data.miller_time) {
+                millerResult.innerHTML += `<br><small>${data.miller_time}ms</small>`;
+            }
+
+            trialResult.style.color = data.trial_division ? '#27ae60' : '#e74c3c';
+            millerResult.style.color = data.miller_rabin ? '#3498db' : '#e74c3c';
+
+            updateVisualization('trialSteps', data.trial_steps);
+            updateVisualization('millerSteps', data.miller_steps);
+        }
+
+        function updateVisualization(containerId, steps) {
+            const container = document.getElementById(containerId);
+            container.innerHTML = '';
+
+            steps.forEach(step => {
+                const div = document.createElement('div');
+                div.className = 'step-item';
+                div.textContent = step;
+                container.appendChild(div);
+            });
+
+            container.scrollTop = container.scrollHeight;
+        }
+
+        function showError(message) {
+            const errorDiv = document.getElementById('error');
+            errorDiv.textContent = message;
+            errorDiv.style.display = 'block';
+        }
+    </script>
+</body>
+
+</html>
